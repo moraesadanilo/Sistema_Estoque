@@ -1,28 +1,37 @@
 #include <iostream>
-#include <string>
 #include <iomanip>
+#include <string>
+#include <vector>
+#include <list>
+#include <set>
+#include <map>
 using namespace std;
 
 class Produto {
 private:
     string nome;
-    double preco;
+    string categoria;
+    double preco;  //valor initario
     int saldo_estoque;
+    //int id;      //como se auto gerar?
     
 public:
 //CONSTRUTOR://
-    Produto(string n, double p, int s){
+    Produto(string n, double p, string c, int s){
         nome=n;
         preco=p;
         saldo_estoque=s;
+        categoria=c;
     };
     Produto(string n, double p){
         nome=n;
         preco=p;
+        categoria="";
         saldo_estoque= 0;
     };
     Produto(string n){
         nome=n;
+        categoria="";
         preco=0;
         saldo_estoque= 0;
     };
@@ -64,30 +73,89 @@ public:
                 cout<<"Valor invalido!"<<endl;
             }
         };
-        void exibirproduto(){
+        void exibirproduto()const{
             cout<<"Item: "<<nome<< " | Preco: "<<preco<< " | Estoque atual: "<<saldo_estoque<<endl;
         };
         
         string getnome(){
             return nome;
         }
-        double getpreco(){
+        string getcategoria() const{
+            return categoria;
+        }
+        double getpreco() const{
             return preco;
         }
-        int getsaldo_estoque(){
+        int getsaldo_estoque() const{
             return saldo_estoque;
         }
 
 };
 
+    //Departamento - linha
+    //marca modelo ano
+    //Classe filha, ex celular -> Fab/marca - modelo - etc
+    //Classe filha, ex vestuario -> Fab/marca - modelo - tamanho
 
 int main() {
-    Produto item1("Celular", 2000, 1);
-    Produto item2("Camisa", 24.9);
-    Produto item3("Vinho");
-    item1.exibirproduto();
-    item2.exibirproduto();
-    item3.exibirproduto();
+    vector<Produto> estoque;
+
+    cout<<"Estoque inical: ";
+    cout<<estoque.size()<<endl;  //tamanho do estoque
+    //cout<<estoque.empty()<<endl; //estoque está vazio?
+    
+    estoque.push_back(Produto("Celular", 2000, "Eletronicos", 1));
+    estoque.push_back(Produto("Camisa", 24.9));
+    estoque.push_back(Produto("Vinho"));
+    estoque.push_back(Produto("Tablet", 2000, "Eletronicos", 5));
+    estoque.push_back(Produto("Mouse", 35.5, "Informatica", 100));
+    estoque.push_back(Produto("Notebook", 3000, "Informatica", 25));
+
+
+    cout<<"Estoque final: ";
+    cout<<estoque.size()<<endl;  //tamanho do estoque
+    //<<estoque.empty()<<endl; //estoque está vazio?
+
+    // SET: Categorias disponíveis
+    set<string> categorias;
+    categorias.insert("Telefonia");
+    categorias.insert("Vestuario");
+    categorias.insert("Perfumaria");
+    categorias.insert("Bebidas");
+
+    
+
+    // 3. MAP: contagem de produtos por categoria
+    map<string, int> produtos_por_categoria;          // produto por categoria 
+    for (const Produto& item : estoque) {         //na classe Produto, vector estoque
+        produtos_por_categoria[item.getcategoria()]++; 
+    } 
+    
+    // 3. MAP:  valor total em estoque por categoria
+    map<string, double> valorTotal_categoria;       
+    for (const Produto& item : estoque) {         
+        
+        valorTotal_categoria[item.getcategoria()]+= item.getpreco() *item.getsaldo_estoque(); 
+    } 
+
+    
+    cout << "\n--- PRODUTO POR CATEGORIA (map) ---" << endl; 
+    for (const auto& par : produtos_por_categoria) { 
+    cout << par.first << ": " << par.second << " produto(s)" << endl; 
+    } 
+
+    cout << "\n--- VALOR TOTAL DA CATEGORIA (map) ---" << endl;
+    for (const auto& par : valorTotal_categoria) { 
+    cout << par.first << ": R$ " << par.second << " em produto(s)" << endl; 
+    } 
+
+
+    cout << "\n=== ESTATISTICAS ===" << endl;
+    cout << "\n--- TODOS OS PRODUTOS (vector) ---" << endl; 
+    for (const Produto& item : estoque) { 
+        item.exibirproduto();
+        //cout<<endl;
+    } 
 
     return 0;
 }
