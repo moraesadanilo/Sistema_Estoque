@@ -5,119 +5,490 @@
 #include <list>
 #include <set>
 #include <map>
+#include <chrono>
 using namespace std;
-
+struct itemMov {
+        string nomeProduto;
+        string categoria = "Nao registrada";
+        int quantidade;
+        double valorTotal;
+        std::chrono::system_clock::time_point data;  
+    };                 //Estrutura para item em movimentacao
+// ############ ASSINATURAS ##########
 class Produto {
 private:
     string nome;
-    string categoria;
-    double preco;  //valor initario
+    double valor_unit;  
     int saldo_estoque;
-    //int id;      //como se auto gerar?
     
 public:
-//CONSTRUTOR://
-    Produto(string n, double p, string c, int s){
-        nome=n;
-        preco=p;
-        saldo_estoque=s;
-        categoria=c;
-    };
-    Produto(string n, double p){
-        nome=n;
-        preco=p;
-        categoria="";
-        saldo_estoque= 0;
-    };
-    Produto(string n){
-        nome=n;
-        categoria="";
-        preco=0;
-        saldo_estoque= 0;
-    };
+//CONSTRUTORORES://
+    Produto(string n, double u, int s);
+    Produto(string n, double u);
+    Produto(string n);
+    Produto();
 //ENTRADAS E MODIFICAÇÕES//
-    void entrada(Produto &item, int qtd){
-        if(qtd>0){
-            item.saldo_estoque+=qtd;
-            cout<<"Entrada realizada com sucesso. Novo estoque: "<<item.getsaldo_estoque()<<endl;
-        }else{
-            cout<<"Valor invalido!"<<endl;
-        }
-    };
-    void alterapreco(Produto &item, double valor){
-        if(valor>=0 && valor!=item.preco){
-            item.preco=valor;
-            cout<<"Preço alterado com sucesso. Novo preço: "<<item.getpreco()<<endl;
-        }else{
-            cout<<"Valor invalido!"<<endl;
-            //valor igual anterior
-        }
-            
-    };
-    // SETTERS - para modificar com validação 
-    void setNome(string n){ 
-        if (n.length() > 0) { 
-            nome = n; 
-        }else { 
-        cout << "Erro: Nome não pode ser vazio!" << endl; 
-            nome = "Sem nome"; 
-        } 
-    }
+    void entrada(Produto &item, int qtd);
+    void alteraPreco(Produto &item, double valor);
+// SETTERS - para modificar com validação 
+    void setNome(string n);
+    void setValorUni(double u);
+    void setSaldoEst(int s);
     
-    //SAIDAS E CONSULTAS//
-        void saida(Produto &item, int qtd){
-            if(saldo_estoque>qtd){
-              item.saldo_estoque-=qtd;
-              cout<<"Entrada realizada com sucesso. Novo estoque: "<<item.getsaldo_estoque()<<endl;
-            }else{
-                cout<<"Valor invalido!"<<endl;
-            }
-        };
-        void exibirproduto()const{
-            cout<<"Item: "<<nome<< " | Preco: "<<preco<< " | Estoque atual: "<<saldo_estoque<<endl;
-        };
-        
-        string getnome(){
-            return nome;
-        }
-        string getcategoria() const{
-            return categoria;
-        }
-        double getpreco() const{
-            return preco;
-        }
-        int getsaldo_estoque() const{
-            return saldo_estoque;
-        }
-
-};
-
+//SAIDAS E CONSULTAS//
+    bool saida(Produto &item, int qtd);
+    void exibirproduto()const;
+    string getNome() const;
+    double getValor_unit() const;
+    int getSaldo_estoque() const;
     //Departamento - linha
     //marca modelo ano
     //Classe filha, ex celular -> Fab/marca - modelo - etc
     //Classe filha, ex vestuario -> Fab/marca - modelo - tamanho
-
-int main() {
-    vector<Produto> estoque;
-
-    cout<<"Estoque inical: ";
-    cout<<estoque.size()<<endl;  //tamanho do estoque
-    //cout<<estoque.empty()<<endl; //estoque está vazio?
+};
+///////////////////////////
+// 1. Declaração Forward
+class Relatorio; // Diga ao compilador: "Relatorio é um nome de classe"
+//////////////////////////////////////////////////////////////
+class Estoque{
+private:
+    //Relacionamento//
+    Relatorio& relatorio;         // referência ao objeto Relatorio                                 //ok
+    //NÃO cria um objeto Relatorio, ele usa um que já existe.
     
-    estoque.push_back(Produto("Celular", 2000, "Eletronicos", 1));
-    estoque.push_back(Produto("Camisa", 24.9));
-    estoque.push_back(Produto("Vinho"));
-    estoque.push_back(Produto("Tablet", 2000, "Eletronicos", 5));
-    estoque.push_back(Produto("Mouse", 35.5, "Informatica", 100));
-    estoque.push_back(Produto("Notebook", 3000, "Informatica", 25));
+    //VECTORES: 
+    vector<Produto> estoque;            //estoque completo - privado                                //ok
+    vector<itemMov> vendas_hitorico;     // lista interna de vendas
+    // Associação produto -> categoria.
+    map<string, string> categoriaDoProduto;         // chave = nome do produto & valor = categoria. //ok
+    map<string, set<string>>produtosDaCategoria;    // chave = categoria  & valor = nome do produto
+    
+public:
+    //= = = = ACESSO = = = = 
+    // Permite que outras classe leia os dados, mas não os modifique.
+    const vector<Produto>& getEstoque() const {
+        return estoque;
+    }                                                                  //ok
+    // Getter para o mapa de categorias (apenas leitura)
+    const map<string, string>& getCategorias() const {
+        return categoriaDoProduto;
+    }                                                           //ok
+    
+    ////////// = = = CONSTRUTORES = = = //////////  
+    //link para class Relatório
+    
+    //construtor construtor que recebe o objeto Relatorio existente.
+    Estoque(Relatorio& rel) : relatorio(rel) {}
+    //
+    void adicionarProduto(){
+    string nome;
+    //string categ;
+    double valor_unit; //preço
+    int quantidade;
+    
+    cout << "Nome do produto: ";
+    getline(cin, nome);
+    cout << "Valor unitario (R$): ";
+    cin >> valor_unit;
+    cout << "Quantidade: ";
+    cin >> quantidade;
 
+    estoque.push_back( Produto(nome, valor_unit, quantidade));    
+    }
+    //
+    
+    /*
+    // função para montar struct de registro de entrada e saida
+    Movimentacao montaRegistro(const Produto& item, int n) {
+    Movimentacao base;
+    base.nomeProduto = item.getnome();
+    base.categoria    = item.getcategoria();
+    base.quantidade   = n;
+    base.valorTotal   = item.getvalor() * n;  // calcula o valor total da venda
+    return base;
+    }
+    */
+    
+    // = = adição de itens = = //
+    void adicionarProduto(string nome, double valor_unit, int quantidade){
+        estoque.push_back( Produto(nome, valor_unit, quantidade));    
+    }
+    void adicionarProduto(string nome, double valor_unit){
+        estoque.push_back( Produto(nome, valor_unit));    
+    }
+    void adicionarProduto(string nome){
+        estoque.push_back( Produto(nome));    
+    }
+    void entradaProduto(string nome){  // realizar venda
+        bool encontrado=false;
+        bool venda_realizada=false;
+        
+        for (auto& item : estoque) {
+            if(item.getNome() == nome){
+                encontrado=true;
+                //saida por chamada de função da clase Produto
+                cout << "Quantidade a ser vendida: ";
+                int n;
+                cin >> n;
+                venda_realizada=item.saida(item, n);
+                
+                //registos nos históricos
+                if(venda_realizada==true){
+                itemMov venda;  // trecho pode virar função de montagem de estrutura
+                venda.nomeProduto=item.getNome();
+                //venda.categoria=item.getcategoria();
+                venda.quantidade=n;
+                venda.valorTotal=n* item.getValor_unit();
+                venda.data = std::chrono::system_clock::now();   // salva a data/hora atual
+                //relatorio.registrarVenda(venda);                          //registra venda no historico
+                
+                cout<<"Venda realizada e registrada com sucesso!"<<endl;
+                break;
+                }
+            }
+        };
+        if(encontrado==false){cout<<"Produto nao encontrado"<<endl;
+        }
+    }
+    
+// = = = = =  ATUALIZADORES = = = = = 
+    //MAP: define a qual categoria o podutos fará parte
+    void definirCategoria(const string& nomeProd, const string& categ);
+
+    
+    
+    /////////////////////////////////////
+ /*   void atualizarProdutoPorCategoria(){
+        for (const Produto& item : estoque) {                   //na classe Produto, vector estoque
+            produtos_por_categoria[item.getcategoria()]++;      //incremento do MAP ao percorrer o vector.
+        }
+    }       */
+    // MAP:  valor total em estoque por categoria
+ /*   void valorTotalPorCategoria(){       //valor total por categoria       
+        for (const Produto& item : estoque) {         
+            valorTotal_Categoria[item.getcategoria()]+= item.getValor_unit() *item.getsaldo_estoque(); 
+        } 
+    }
+    */
+    
+// = = = SAIDA E CONSULTAS = = = 
+    //Busca o produto pelo nome dentro do container vector 
+//    Produto* buscarProduto(string& nome) {
+//        for (auto& item : estoque) {
+//            if (item.getnome() == nome){
+//                return &item;
+//            }
+//        }
+//        return nullptr;
+//    }
+    //consulta e exibição de produto pelo nome dentro do container vector
+    void consultarProduto(string nome){
+        int cont = 0;
+        for (const auto& item : estoque) {
+            if(item.getNome() == nome){
+                item.exibirproduto();
+                cont++;
+            }
+        }
+        if(cont==0) cout<<"Produto nao encontrado";
+    }
+    
+    //saida por venda
+    void realizarVenda(string nome){  // realizar venda
+        bool encontrado=false;
+        bool venda_realizada=false;
+        
+        for (auto& item : estoque) {
+            if(item.getNome() == nome){
+                encontrado=true;
+                //saida por chamada de função da clase Produto
+                cout << "Quantidade de "<<nome<<" a ser vendida: ";
+                int n;
+                cin >> n;
+                venda_realizada=item.saida(item, n);
+                
+                //registos nos históricos
+                if(venda_realizada==true){
+                itemMov venda;  // trecho pode virar função de montagem de estrutura
+                venda.nomeProduto=item.getNome();
+                //venda.categoria=item.getcategoria();
+                venda.quantidade=n;
+                venda.valorTotal=n* item.getValor_unit();
+                venda.data = std::chrono::system_clock::now();   // salva a data/hora atual
+                //relatorio.registrarVenda(venda);                          //registra venda no historico
+                
+                cout<<"Venda realizada e registrada com sucesso!"<<endl;
+                break;
+                }
+            }
+        };
+        if(encontrado==false){cout<<"Produto nao encontrado"<<endl;
+        }
+    }
+/*    
+***    //Exibe item movimentado 
+***   void exibirItemEst(const Movimentacao& v){
+***   cout<<"Item: "<<v.nomeProduto<<" | Qtd: "<<v.quantidade<< " | Valor total: R$ "<<v.valorTotal<<endl;
+    }
+*/
+    // Tamanho do estoque total
+    int tamanhoEstoque(){
+        return estoque.size();    
+    }
+};
+/////////////////////////////////////////////////////////////
+class Relatorio{
+private:
+    /*
+    struct Venda {
+        string nomeProduto;
+        string categoria;
+        int quantidade;
+        double valorTotal;
+        std::chrono::system_clock::time_point data;  
+    };                 //Estrutura para registro de vendas
+    */
+    //const vector<Produto>& estoqueRef;   // referência ao estoque real injeção de referencia nao esta no material
+    
+    vector<Produto> estoque;                                                                                        //ok
+    vector<itemMov> vendas_Historico;       //vector para armazenar o registro de vendas
+    vector<itemMov> entradas_Historico;     //vector para armazenar o registro de vendas
+    set<string> categoriasUnicas;           // SET: Categorias disponíveis                                          //ok
+    map<string, string> categoriadProduto;         // chave = nome do produto & valor = categoria.                  //ok
+    map<string, set<string>> produtosDaCategoria;  //receber uma referência ao map sem copiar.
+    map<string, int> produtos_por_categoria;       // MAP: Quantidade total de produtos em cada categoria   contagem//ok
+    map<string, int> unid_por_categoria;           //Total de unidades de prod da categotia                        //ok
+    map<string, double> valorTotal_Categoria;       //soma do valor em estoque por categoria                        //ok
+    // total itens categoria
+    //inventario categoria
+    //inventario total
+    //valor total inventario
+    double valorTotalEstoque; 
+    
+public:
+    //Atualiza todo inventário
+    void calcularEstatisticas(const Estoque& loja){
+    // Limpa os MAPs antes de recalcular
+        produtos_por_categoria.clear();
+        valorTotal_Categoria.clear();
+
+    // Obtém os dados de Estoque
+        const vector<Produto>& dadosEstoque = loja.getEstoque();            //recebe estoque bruto de Estoque
+        const map<string, string>& dadosCategorias = loja.getCategorias();    //recebe map com as categ fornecidas por Estoque
+    
+    // Atualizada produtos vinculados a categorias
+        for (const auto& produto : dadosEstoque) {
+        
+        // Encontra a categoria do produto usando seu nome (Produto::getNome()) como chave
+        auto it = dadosCategorias.find(produto.getNome());  
+
+        if (it != dadosCategorias.end()) {          //Verifica se o elemento foi encontrado ou não, end() para indicar não existir/o fim.
+            // Se a categoria for encontrada:
+            const string& categoria = it->second;   //extrai valor(string) do map : map<chave,valor>;
+            // Calcula o valor total deste produto
+            double valorProduto = produto.getValor_unit() * produto.getSaldo_estoque();
+            // Atualiza o map de contagem de quantos produtos tem na categoria (carteira de produtos)
+            produtos_por_categoria[categoria]++;                                                        
+            //Atualiza o saldo de itens em cada categoria (unidades)
+            unid_por_categoria[categoria] += produto.getSaldo_estoque();                                      
+            // Atualiza o map de valor total (adiciona o valor)
+            valorTotal_Categoria[categoria] += valorProduto;
+        }
+    }
+    
+    // Atualizada todos os produtos registrados no sistema.
+        double valorTotalEstoque = 0.0;
+        
+        for (const auto& item : dadosEstoque) {
+        double valorItem = item.getValor_unit() * item.getSaldo_estoque();
+        valorTotalEstoque += valorItem;
+        }
+        
+    }    
+    
+// = = = = = ENTRADAS DE DADOS (métodos de manipulação) = = = = =
+
+    //Registra entrada ao historico 
+    void registrarEntrada(const itemMov& ent) {   //recebe venda realizada
+        entradas_Historico.push_back(ent);      //add a venda recebida ao vector
+    }
+    // Adiciona valores de categorias ao respectivo container.
+    void adicionarCategoria(const string& nome) {
+        categoriasUnicas.insert(nome);
+    }
+    //Adiciona valores de produtos ao respectivo container de categorias.
+    void adicionarProd_Categoria(const string& nomeProduto, const string& categoria){
+        produtosDaCategoria[categoria].insert(nomeProduto);
+    }
+
+// = = = = = SAIDAS DE DADOS (métodos de manipulação) = = = = =
+    double getvalorTotalInventario(){
+        return valorTotalEstoque;
+    };
+    
+    
+    //Registra venda ao historico 
+    void registrarVenda(const itemMov& v) {   //recebe venda realizada
+        vendas_Historico.push_back(v);      //add a venda recebida ao vector
+    }
+
+// = = = = = IMPRESSOES EM TELA = = = = = //
+    //Exibe inventário completo
+    void gerarInventarioCompleto(const Estoque& analisado) {
+        // Acessa os dados privados de Estoque através do método público
+        const vector<Produto>& dadosEstoque = analisado.getEstoque();
+        
+        cout << "\n=== ESTATISTICAS ===" << endl;
+        for (const auto& item : dadosEstoque) {
+            // Lógica para gerar o relatório com os dados do produto
+            item.exibirproduto();
+        }
+        cout << "\n====================" << endl;
+        cout<<"Valor Total (R$): "<< getvalorTotalInventario();
+        cout << "\n====================" << endl;
+    }     //ok
+    //Exibe todas as entradas registradas
+    void relatorioHistoricoEntradas() const {
+        cout << "\n======= HISTÓRICO DE ENTRADAS =======" << endl;
+        for (const auto& registro : entradas_Historico)       //percorre todos os registros do vector
+            exibirItem(registro);                          //exibe os registros do vector em tela
+        cout << "====================================" << endl;
+    }
+    //Exibe venda em tela
+    void exibirItem(const itemMov& v) const {    //recebe e exibe em tela uma venda
+        cout << "Item: " << v.nomeProduto
+             << " | Qtd: " << v.quantidade
+             << " | Total: R$ " << v.valorTotal
+             << endl;
+    }
+    //Exibe todas as vendas registradas
+    void relatorioHistoricoVendas() const {
+        cout << "\n======= HISTÓRICO DE VENDAS =======" << endl;
+        for (const auto& registro : vendas_Historico)       //percorre todos os registros do vector
+            exibirItem(registro);                          //exibe os registros do vector em tela
+        cout << "====================================" << endl;
+    }
+    // Lista e imprime as categorias do sistema
+    void exibirCategorias(){
+        cout << "\n======= CATEGORIAS DOS PRODUTOS =======" << endl;
+        for (const string& elemento : categoriasUnicas){
+        cout << "- " << elemento << endl;
+        }
+        cout << "====================================" << endl;
+    }
+    // Lista e imprime em tela os itens de cada categoria do sistema
+    void imprimirProdutosPorCategoria() const {
+    cout << "\n======= PRODUTOS DAS CATEGORIAS =======" << endl;
+        for (const auto& par : produtosDaCategoria) {
+            const auto& categoria = par.first;      //categoria = chave
+            const auto& produtos = par.second;      //produto (nome) = valor
+            
+            cout << "# Categoria: " << categoria << "\n";
+            for (const auto& item : produtos) {
+                std::cout << "  - " << item << "\n";
+            }
+            cout << "\n";
+        }
+        cout << "====================================" << endl;
+    }
+    // exibe set de categorias unicas
+    
+
+   
+    void exibirEstatisticasPorCategoria() const {
+    cout << "\n=== RELATÓRIO DE ESTATÍSTICAS POR CATEGORIA ===" << std::endl;
+    
+    // Iteramos sobre o mapa de contagem de produtos (carteira).
+    // Assumimos que as chaves (categorias) são as mesmas nos três mapas.
+    for (const auto& par : produtos_por_categoria) {
+        const string& categoria = par.first;
+        int contagem_produtos = par.second; // Quantidade de tipos de produtos (ex: 5 tipos)
+
+        // Buscamos os valores correspondentes nos outros mapas:
+        // Nota: O método .at() é usado para acessar o valor, pois já sabemos que a chave existe
+        // se ela veio do loop de produtos_por_categoria.
+        int unidades_totais = unid_por_categoria.at(categoria);
+        double valor_total = valorTotal_Categoria.at(categoria);
+
+        cout << "\n # CATEGORIA: " << categoria << std::endl;
+        
+        cout << std::fixed << std::setprecision(2); // Formatação para valores monetários
+
+        cout << "  - Tipos de produtos : " << contagem_produtos << std::endl;
+        cout << "  - Unidades em estoque (Total): " << unidades_totais << std::endl;
+        cout << "  - Valor total em estoque (R$): " << valor_total << std::endl;
+    }
+    
+    cout << "==========================================" << std::endl;
+    }
+    
+};
+////////////////////////////////////////////////////////////
+int main() {
+    // = = declarações = = //
+    Relatorio relLoja;
+    Estoque loja(relLoja);
+    
+   
+    // = = testes com valores = = //
+    cout<<"Estoque inical: ";
+    cout<<loja.tamanhoEstoque()<<endl;  //tamanho do estoque
+    
+    loja.adicionarProduto("Celular", 2000, 1);
+    loja.adicionarProduto("Camisa Polo", 24.9, 10);
+    loja.adicionarProduto("Camisa Regata", 24.9, 30);
+    loja.adicionarProduto("Vinho");
+    loja.adicionarProduto("Tablet", 2000, 5);
+    loja.adicionarProduto("Mouse", 35.5, 100);
+    loja.adicionarProduto("Notebook", 3000, 25);
+    loja.adicionarProduto("Celular", 2000, 1);
+    loja.adicionarProduto("Celular", 1500, 5);
+    loja.adicionarProduto("Tablet", 3000,  5);
+    
+    loja.definirCategoria("Camisa Polo", "Vestuario");
+    loja.definirCategoria("Mouse", "Informativa");
+    loja.definirCategoria("Notebook", "Informativa");
+    loja.definirCategoria("Celular", "Eletrônicos");
+    loja.definirCategoria("Tablet", "Eletrônicos");
+    
+    //loja.realizarVenda("Celular");
+    //loja.realizarVenda("Tablet");
+    cout<<"Estoque intermediario: ";
+    cout<<loja.tamanhoEstoque()<<endl;  //tamanho do estoque
+    
+    relLoja.relatorioHistoricoEntradas();
+    relLoja.relatorioHistoricoVendas();
+    relLoja.exibirCategorias();
+    relLoja.exibirCategorias();
+    relLoja.imprimirProdutosPorCategoria();
+    
+    loja.consultarProduto("Celular");  //consulta pelo nome - apenas exibição
+    
+    relLoja.calcularEstatisticas(loja);
+    relLoja.exibirEstatisticasPorCategoria();
+    relLoja.gerarInventarioCompleto(loja);
+    
+/*  //= = = = = teste digitavel    
+    estoque1.adicionarProduto();
+    estoque1.adicionarProduto();
+*/
+/*
+    estoque1.registrarVenda("Celular");
+    estoque1.registrarVenda("Celular");
+    estoque1.registrarVenda("Tablet");
 
     cout<<"Estoque final: ";
-    cout<<estoque.size()<<endl;  //tamanho do estoque
-    //<<estoque.empty()<<endl; //estoque está vazio?
+    cout<<estoque1.tamanhoEstoque()<<endl;  //tamanho do estoque
 
-    // SET: Categorias disponíveis
-    set<string> categorias;
+    
+    estoque1.consultarProduto("Celular");  //consulta pelo nome - apenas exibição
+    
+    
+    
+    estoque1.relatorioHistoricoVendas(); //historico de vendas
+
+    
+    
     categorias.insert("Telefonia");
     categorias.insert("Vestuario");
     categorias.insert("Perfumaria");
@@ -125,37 +496,121 @@ int main() {
 
     
 
-    // 3. MAP: contagem de produtos por categoria
-    map<string, int> produtos_por_categoria;          // produto por categoria 
-    for (const Produto& item : estoque) {         //na classe Produto, vector estoque
-        produtos_por_categoria[item.getcategoria()]++; 
-    } 
+
+     
     
-    // 3. MAP:  valor total em estoque por categoria
-    map<string, double> valorTotal_categoria;       
-    for (const Produto& item : estoque) {         
-        
-        valorTotal_categoria[item.getcategoria()]+= item.getpreco() *item.getsaldo_estoque(); 
-    } 
-
-    
-    cout << "\n--- PRODUTO POR CATEGORIA (map) ---" << endl; 
-    for (const auto& par : produtos_por_categoria) { 
-    cout << par.first << ": " << par.second << " produto(s)" << endl; 
-    } 
-
-    cout << "\n--- VALOR TOTAL DA CATEGORIA (map) ---" << endl;
-    for (const auto& par : valorTotal_categoria) { 
-    cout << par.first << ": R$ " << par.second << " em produto(s)" << endl; 
-    } 
-
-
-    cout << "\n=== ESTATISTICAS ===" << endl;
-    cout << "\n--- TODOS OS PRODUTOS (vector) ---" << endl; 
+    cout << "\n--- INVENTARIO POR ITEM - TODOS OS PRODUTOS (sem saldos zerados) ---" << endl;  
     for (const Produto& item : estoque) { 
-        item.exibirproduto();
-        //cout<<endl;
+        if(item.getsaldo_estoque()>0){
+            item.exibirproduto();
+            //cout <<"         Valor total do item: "<<endl;
+        }
     } 
+*/
 
     return 0;
 }
+
+// ############ IMPLEMENTAÇÕES ##########
+//CONSTRUTOR://
+//genericos
+//Produto::Produto(string n, double u, int s) : nome(n), valor_unit(u), saldo_estoque(s){}
+Produto::Produto(string n, double u) : nome(n), valor_unit(u), saldo_estoque(0){}
+Produto::Produto(string n) : nome(n), valor_unit(0), saldo_estoque(0){} 
+// construtor padrão, inicializa com valores neutros
+Produto::Produto() {
+        setNome("");
+        setValorUni(0.0);
+        setSaldoEst(0);
+}
+//com validação
+Produto::Produto(string n, double u, int s){ 
+    setNome(n);      
+    setValorUni(u);     
+    setSaldoEst(s);    
+} 
+
+//ENTRADAS E MODIFICAÇÕES//
+void Produto::entrada(Produto &item, int qtd){
+        if(qtd>0){
+            item.saldo_estoque+=qtd;
+            cout<<"Entrada realizada com sucesso. Novo estoque: "<<item.getSaldo_estoque()<<endl;
+        }else{
+            cout<<"Valor invalido!"<<endl;
+        }
+};
+void Produto::alteraPreco(Produto &item, double valor){
+    if(valor>=0 && valor!=item.valor_unit){
+        item.valor_unit=valor;
+        cout<<"Preço alterado com sucesso. Novo preço: "<<item.getValor_unit()<<endl;
+    }else{
+        cout<<"Valor invalido!"<<endl;
+        //valor igual anterior
+    }
+            
+};
+// SETTERS - para modificar com validação 
+void Produto::setNome(string n){ 
+    if (n.length() > 0) { 
+        nome = n; 
+    }else { 
+    cout << "Erro: Nome não pode ser vazio!" << endl; 
+        nome = "Sem nome"; 
+    } 
+};
+void Produto::setValorUni(double u){
+    if (u > 0 ) { 
+            valor_unit = u;
+        } 
+    else { 
+    cout << "Erro: Valor inválido! Mantendo valor anterior." <<endl;} 
+};     
+void Produto::setSaldoEst(int s){
+    if (s > 0 ) { 
+         saldo_estoque = s;
+        } else { 
+            cout << "Erro: Valor inválido! Mantendo valor anterior." <<endl;
+        }
+};
+
+//SAIDAS E CONSULTAS//
+    bool Produto::saida(Produto &item, int qtd){
+            if(qtd<=0){
+                cout<<"ERRO! Valor invalido."<<endl;
+                return false;
+            } else if(saldo_estoque>=qtd){
+              item.saldo_estoque-=qtd;
+              return true;
+              //cout<<"Solicitacao atendida;
+            }else{
+                cout<<"Saldo insuficiente no estoque!"<<endl;
+                return false;
+            }
+    };
+    void Produto::exibirproduto()const{
+            cout<<"Item: "<<nome<< " | Preco: "<<valor_unit<< " | Estoque atual: "<<saldo_estoque<<endl;
+    };
+    string Produto::getNome() const{
+        return nome;
+    };
+    /*string Produto::getcategoria() const{
+            return categoria;
+    };*/
+    double Produto::getValor_unit() const{
+            return valor_unit;
+    };
+    int Produto::getSaldo_estoque() const{
+            return saldo_estoque;
+    };
+    
+///////////////////////////////////// CLASSE ESTOQUE //////////////////////////
+
+// = = = = =  ATUALIZADORES = = = = = 
+    //MAP: define a qual categoria o podutos fará parte
+    void Estoque::definirCategoria(const string& nomeProd, const string& categ){
+        categoriaDoProduto[nomeProd]=categ;                     // chave = nome do produto & valor = categoria.
+        produtosDaCategoria[categ].insert(nomeProd);            // valor = categoria alimentando o SET de categorias unicas.
+        relatorio.adicionarCategoria(categ);                    // envia pro Relatorio a categoria alimentando o SET de categorias unicas.
+        relatorio.adicionarProd_Categoria(nomeProd, categ);
+        
+    } 
