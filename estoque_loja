@@ -1,0 +1,127 @@
+#include <iostream>
+#include <string>
+#include <iomanip>
+#include "Sistema_Bancario_Simples.h"
+using namespace std;
+
+// # # #  FUNÇÕES CLASSE PRODUTO # # #
+//CONSTRUTOR://
+    //Construtor COM parametros.
+    Cliente::produto(string n, double p, int s){
+            nome=n;
+            preco=p;
+            saldo_estoque=s;
+        };
+    //Construtor padrão
+    Cliente::Cliente(){
+        nome="";
+        cpf="";
+    }
+//SAIDAS E CONSULTAS//
+    void Cliente::exibirCliente(){
+        cout<<"Cliente: "<< nome <<" - CPF: "<< cpf<<"."<<endl;
+    }
+    string Cliente::getnome(){               
+        return nome;
+    }
+    string Cliente::getcpf(){               
+        return cpf;
+    }
+
+
+// # # #  FUNÇÕES DA CLASSE CONTABANCARIA # # #
+
+//CONSTRUTOR://
+    ContaBancaria::ContaBancaria(int n, Cliente t, double s){
+        numero = n;
+        saldo = s;
+        titular = t;
+    }
+    ContaBancaria::ContaBancaria(int n, Cliente t){
+        numero = n;
+        saldo = 0;
+        titular = t;
+    }
+
+//ENTRADAS E MODIFICAÇÕES//
+    void ContaBancaria::depositar(double valor){
+        saldo+=valor;
+        cout<<"Deposito realizado com sucesso na conta "<< numero <<". Valor: "<<valor<<endl;
+    }
+    void ContaBancaria::sacar(double valor){
+        if(saldo>=valor){
+            saldo-=valor;
+            cout<<"Conta "<< numero <<", saque realizado com sucesso. Valor: "<<valor<<endl;
+
+        }else{
+            cout<<"Saldo insuficiente!"<<endl;
+            cout<<". . . . . . . . . . . . . . . "<<endl;
+        }
+    }
+
+    void ContaBancaria::transferir(double valor, ContaBancaria &destino){
+    //PROCESSAMENTO DA TRANSAÇÃO
+            if(saldo>=valor){           // <--- CHECAGEM DE SALDO.
+                saldo-=valor;
+                destino.saldo+=valor;
+
+                //COMPROVANTE DA OPERAÇÃO
+                cout<< "Tranferencia realizada com sucesso!"<<endl;
+                cout<< "Transferido R$ "<<valor<<" da conta "<< numero << endl;
+                cout<< "Favorecido: "<< destino.gettitular() <<", conta: "<< destino.getnumero() <<endl;
+                cout<< ". . . . . . . . . . . . . . . . . . . . " <<endl;
+
+            }else{
+                cout<<"Saldo insuficiente!"<<endl;        //  <--AVISO NA FALTA DE SALDO.
+                cout<<". . . . . . . . . . . . . . . . . "<<endl;  
+            }
+        }
+
+        void ContaBancaria::transferir(double valor, ContaBancaria &destino1, ContaBancaria &destino2){
+            if(saldo>=valor){       //<--CHECAGEM DE SALDO.
+            //RETIRADA DA CONTA DE SAÍDA
+                saldo-=valor;
+            //PROCESSAMENTO DA DIVISÃO DE VALORES
+                double meiovalor=valor/2;
+
+            //CREDITO NAS CONTAS DE DESTINO
+                destino1.saldo+=meiovalor;
+                destino2.saldo+=meiovalor;
+
+                //COMPROVANTE DA OPERAÇÃO
+                cout<< "Tranferencia para dois destinatarios realizada com sucesso!"<<endl;
+                cout<< "Transferido R$ "<<valor<<" da conta "<< numero <<endl;
+                cout<< "Favorecido 1: "<< destino1.gettitular() <<", conta: "<< destino1.getnumero() <<endl;
+                cout<< "Favorecido 2: "<< destino2.gettitular() <<", conta: "<< destino2.getnumero() <<endl;
+                cout<<". . . . . . . . . . . . . . . . .  . . . "<<endl;
+
+            }else{
+                cout<<"Saldo insuficiente!"<<endl;      //  <--AVISO NA FALTA DE SALDO.
+                cout<<". . . . . . . . . . . . . . "<<endl;
+            } 
+        }
+
+    //SAIDAS E CONSULTAS//
+        int ContaBancaria::getnumero(){               
+            return numero;
+        }
+        string ContaBancaria::gettitular(){               
+            return titular.getnome();
+        }
+        double ContaBancaria::getsaldo(){
+            return saldo;
+        }
+
+       void ContaBancaria::consultarSaldo(){
+            cout << titular.getnome() << ", o seu saldo atual na conta "<< numero <<" eh de: R$ "<< fixed << setprecision(2)<< saldo <<endl;
+            cout<<". . . . . . . . . . . . . . . . .  . . . "<<endl;
+        }
+
+        void ContaBancaria::exibirInfoConta(){
+        //Exibe as informações do titular e da conta.
+            cout<<"Conta numero: "<< numero << endl;
+            cout << "Cliente : " << titular.getnome() << endl;
+            cout << "CPF: "<< titular.getcpf() << endl;
+            cout << "Saldo atual: "<< fixed << setprecision(2)<< saldo << endl;
+            cout<<". . . . . . . . . . . . . . . . .  . . . "<<endl;
+        }
