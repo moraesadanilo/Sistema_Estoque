@@ -58,7 +58,6 @@ private:
     
     //VECTORES: 
     vector<Produto> estoque;            //estoque completo - privado                                //ok
-    vector<itemMov> vendas_hitorico;     // lista interna de vendas
     // Associação produto -> categoria.
     map<string, string> categoriaDoProduto;         // chave = nome do produto & valor = categoria. //ok
     map<string, set<string>>produtosDaCategoria;    // chave = categoria  & valor = nome do produto
@@ -98,7 +97,7 @@ public:
     
     //construtor construtor que recebe o objeto Relatorio existente.
     Estoque(Relatorio& rel) : relatorio(rel) {}
-    //
+    //= = adição de itens sem parametros - solicitado ao usuario = = //
     void adicionarProduto(){
     string nome;
     //string categ;
@@ -122,40 +121,6 @@ public:
     void adicionarProduto(string nome, double valor_unit);
     // = = adição de itens com 1 parametros = = //
     void adicionarProduto(string nome);
-    
-    
-    // = = Entrada de produto  = = //
-    void entradaProduto(string nome){  // realizar venda
-        bool encontrado=false;
-        bool venda_realizada=false;
-        
-        for (auto& item : estoque) {
-            if(item.getNome() == nome){
-                encontrado=true;
-                //saida por chamada de função da clase Produto
-                cout << "Quantidade a ser vendida: ";
-                int n;
-                cin >> n;
-                venda_realizada=item.saida(item, n);
-                
-                //registos nos históricos
-                if(venda_realizada==true){
-                itemMov venda;  // trecho pode virar função de montagem de estrutura
-                venda.nomeProduto=item.getNome();
-                //venda.categoria=item.getcategoria();
-                venda.quantidade=n;
-                venda.valorTotal=n* item.getValor_unit();
-                venda.data = std::chrono::system_clock::now();   // salva a data/hora atual
-                //relatorio.registrarVenda(venda);                          //registra venda no historico
-                
-                cout<<"Venda realizada e registrada com sucesso!"<<endl;
-                break;
-                }
-            }
-        };
-        if(encontrado==false){cout<<"Produto nao encontrado"<<endl;
-        }
-    }
     
 // = = = = =  ATUALIZADORES = = = = = 
     //MAP: define a qual categoria o podutos fará parte
@@ -189,20 +154,11 @@ public:
 /////////////////////////////////////////////////////////////
 class Relatorio{
 private:
-    /*
-    struct Venda {
-        string nomeProduto;
-        string categoria;
-        int quantidade;
-        double valorTotal;
-        std::chrono::system_clock::time_point data;  
-    };                 //Estrutura para registro de vendas
-    */
-    //const vector<Produto>& estoqueRef;   // referência ao estoque real injeção de referencia nao esta no material
+   
     double valorTotalEstoque;
     int itensTotalEstoque;
     
-    vector<Produto> estoque;                                                                                        //ok
+    
     vector<itemMov> vendas_Historico;       //vector para armazenar o registro de vendas
     vector<itemMov> entradas_Historico;     //vector para armazenar o registro de vendas
     set<string> categoriasUnicas;           // SET: Categorias disponíveis                                          //ok
@@ -243,12 +199,14 @@ public:
             valorTotal_Categoria[categoria] += valorProduto;
             }
         }
-        // Chama função separada para calcular valor total do estoque
+        // Chama função separada para calcular valor total do 
+        
+        
         calcularValorTotalEstoque(dadosEstoque);
         calcularItensTotalEstoque(dadosEstoque);
     }
     
-    // cacula valor total do inventário (por produto).
+    // Cacula valor total do inventário (por produto).
     void calcularValorTotalEstoque(const vector<Produto>& dadosEstoque){
         valorTotalEstoque = 0.0; // zera antes de somar
         
@@ -257,7 +215,8 @@ public:
             valorTotalEstoque += valorItem;
         }
     }
-    // cacula valor total do inventário (por produto).
+    
+    // Cacula valor total do inventário (por produto).
     void calcularItensTotalEstoque(const vector<Produto>& dadosEstoque){
         itensTotalEstoque = 0; // zera antes de somar
         
@@ -268,24 +227,34 @@ public:
     
 // = = = = = ENTRADAS DE DADOS (métodos de manipulação) = = = = =
 
-    //Registra entrada ao historico 
+    // Registra entrada ao historico - registro minimo
     void registrarEntrada(const Produto& ent) {   //recebe venda realizada
-        // registro minimo, desatualizado 
-        double valorProduto = ent.getValor_unit() * ent.getSaldo_estoque();
+            // registro minimo 
+        double valorProduto_totEntrad = ent.getValor_unit() * ent.getSaldo_estoque();
 
         //produtos_por_categoria[categoria]++;
         //unid_por_categoria[categoria] += p.getSaldo_estoque();
         //valorTotal_Categoria[categoria] += valorProduto;
-        valorTotalEstoque += valorProduto;
+        valorTotalEstoque += valorProduto_totEntrad;
         itensTotalEstoque += ent.getSaldo_estoque();
         
         //Criação do registro que ira para o relatorio
         itemMov entd;
         entd.nomeProduto = ent.getNome();
         entd.quantidade = ent.getSaldo_estoque(); // ver Se você deseja registrar apenas a QUANTIDADE QUE ENTROU, 
+        entd.valorTotal = valorProduto_totEntrad;
         entd.data = std::chrono::system_clock::now();  //falta teste 
         
         entradas_Historico.push_back(entd);      //add a entrada recebida ao vector
+        
+  
+        
+        
+        
+        
+        
+        
+        
         
 // ===>>>    atualizar para registrar data-hora e usar estrutura padrao
         
@@ -296,22 +265,19 @@ public:
         categoriasUnicas.insert(nome);
     }
     
-    
-   
-    
-    
     //Adiciona valores de produtos ao respectivo container de categorias.
     void adicionarProd_Categoria(const string& nomeProduto, const string& categoria){
         produtosDaCategoria[categoria].insert(nomeProduto);
     }
     
     
-
 // = = = = = SAIDAS DE DADOS (métodos de manipulação) = = = = =
+    
     //Busca valor total (encapsulado privado) 
     double getvalorTotalInventario(){
         return valorTotalEstoque;
     };
+    
     //Busca total de itens em estoque (encapsulado privado)
     int getitensTotalInventario(){
         return itensTotalEstoque;
@@ -321,9 +287,9 @@ public:
     void registrarVenda(const itemMov& v) {   //recebe venda realizada
         vendas_Historico.push_back(v);      //add a venda recebida ao vector
     }
+    
 
 // = = = = = IMPRESSOES EM TELA = = = = = //
-    
     
     //item ja cadastrado
     void itensJaCadastrados(const Estoque& analisado){
@@ -335,7 +301,6 @@ public:
                 item.exibirproduto();
             }
     }
-    
     
     //Exibe inventário completo ====>>> (sem saldos zerados)
     void gerarInventarioCompleto(const Estoque& analisado) {
@@ -353,7 +318,7 @@ public:
         cout<<"Total de itens em estoque: "<< getitensTotalInventario()<<endl;
         cout<<"Valor Total do Inventario (R$): "<< getvalorTotalInventario()<<endl;
         cout << "\n====================" << endl;
-    }     //ok
+    }     
     
     //Exibe todas as entradas registradas
     void relatorioHistoricoEntradas() const {
@@ -362,6 +327,7 @@ public:
             exibirItem(registro);                          //exibe os registros do vector em tela
         cout << "====================================" << endl;
     }
+    
     //Exibe venda em tela
     void exibirItem(const itemMov& v) const {    //recebe e exibe em tela uma venda
         cout << "Item: " << v.nomeProduto
@@ -369,6 +335,7 @@ public:
              << " | Total: R$ " << v.valorTotal
              << endl;
     }
+    
     //Exibe todas as vendas registradas
     void relatorioHistoricoVendas() const {
         cout << "\n======= HISTÓRICO DE VENDAS =======" << endl;
@@ -376,6 +343,7 @@ public:
             exibirItem(registro);                          //exibe os registros do vector em tela
         cout << "====================================" << endl;
     }
+    
     // Lista e imprime as categorias do sistema
     void exibirCategorias(){
         cout << "\n======= CATEGORIAS DOS PRODUTOS =======" << endl;
@@ -384,6 +352,7 @@ public:
         }
         cout << "====================================" << endl;
     }
+    
     // Lista e imprime em tela os itens de cada categoria do sistema
     void imprimirProdutosPorCategoria() const {
     cout << "\n======= PRODUTOS DAS CATEGORIAS =======" << endl;
@@ -400,7 +369,6 @@ public:
         cout << "====================================" << endl;
     }
     
-   
     void exibirEstatisticasPorCategoria() const {
     cout << "\n=== RELATÓRIO DE ESTATÍSTICAS POR CATEGORIA ===" << std::endl;
     
@@ -430,11 +398,9 @@ public:
     
 };
 
-
-
-
-
 ////////////////////////////////////////////////////////////
+
+
 int main() {
     // = = declarações = = //
     Relatorio relLoja;
@@ -462,49 +428,27 @@ int main() {
     loja.definirCategoria("Celular", "Eletrônicos");
     loja.definirCategoria("Tablet", "Eletrônicos");
     
+    cout<<"Estoque intermediario: ";
+    cout<<loja.tamanhoEstoque()<<endl;  //tamanho do estoque
+    
     loja.saidaEstoque("Celular");
     loja.saidaEstoque("Tablet");
     cout<<"Estoque intermediario: ";
     cout<<loja.tamanhoEstoque()<<endl;  //tamanho do estoque
     
-    relLoja.relatorioHistoricoEntradas();
-    relLoja.relatorioHistoricoVendas();
+    
     relLoja.exibirCategorias();
     relLoja.exibirCategorias();
     relLoja.imprimirProdutosPorCategoria();
     
     loja.consultarProduto("Celular");  //consulta pelo nome - apenas exibição
     
+    relLoja.relatorioHistoricoEntradas();
+    relLoja.relatorioHistoricoVendas();
     relLoja.calcularEstatisticas(loja);
     relLoja.exibirEstatisticasPorCategoria();
     relLoja.gerarInventarioCompleto(loja);
     
-/*  //= = = = = teste digitavel    
-    estoque1.adicionarProduto();
-    estoque1.adicionarProduto();
-*/
-/*
-    estoque1.registrarVenda("Celular");
-    estoque1.registrarVenda("Celular");
-    estoque1.registrarVenda("Tablet");
-
-    cout<<"Estoque final: ";
-    cout<<estoque1.tamanhoEstoque()<<endl;  //tamanho do estoque
-
-    
-    estoque1.consultarProduto("Celular");  //consulta pelo nome - apenas exibição
-    
-    
-    
-    estoque1.relatorioHistoricoVendas(); //historico de vendas
-
-    
-    
-    categorias.insert("Telefonia");
-    categorias.insert("Vestuario");
-    categorias.insert("Perfumaria");
-    categorias.insert("Bebidas");
-*/
 
     return 0;
 }
@@ -629,7 +573,7 @@ void Estoque::saidaEstoque(const string& nome) {
     for (auto& item : estoque) {
         if (item.getNome() == nome) {
             encontrado = true;
-            cout << "Quantidade a ser vendida (saida): ";
+            cout << "Quantidade de "<< nome <<" a ser vendida (saida): ";
             int n;
 /*====>*/   cin >> n;   //ver logica para ser 1 por padrão 
             
@@ -658,6 +602,8 @@ void Estoque::saidaEstoque(const string& nome) {
         estoque.push_back( Produto(nome, valor_unit, quantidade)); 
         relatorio.registrarEntrada(estoque.back());
     }
+    
+    
     // = = adição de itens com 2 parametros = = //
     void Estoque::adicionarProduto(string nome, double valor_unit){
         estoque.push_back( Produto(nome, valor_unit)); 
@@ -701,3 +647,4 @@ void Estoque::entradaEstoque(const std::string& nome) {
     }
 }
 */
+
